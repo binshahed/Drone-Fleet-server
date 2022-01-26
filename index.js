@@ -19,21 +19,130 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true
 })
 
-
 async function run () {
   try {
     await client.connect()
     const database = client.db('drone-fleet')
     const productCollection = database.collection('product-collection')
+    const orderCollection = database.collection('order-collection')
+    const reviewCollection = database.collection('review-collection')
+    const usersCollection = database.collection('users-collection')
 
+    // --------------------------
+    // Product section
+    // --------------------------
 
-    //// get package from db
+    //Add Product From Admin
+    app.post('/products', async (req, res) => {
+      const product = req.body
+      const result = await productCollection.insertOne(product)
+      res.json(result)
+    })
+
+    //// get Product from db
     app.get('/products', async (req, res) => {
-        const cursor = productCollection.find({})
-        const drones = await cursor.toArray()
-        res.send(drones)
-      })
+      const cursor = productCollection.find({})
+      const drones = await cursor.toArray()
+      res.send(drones)
+    })
 
+    // --------------------------
+    // Review section
+    // --------------------------
+
+    //Review from customer
+    app.post('/review', async (req, res) => {
+      const review = req.body
+      const result = await reviewCollection.insertOne(review)
+      res.json(result)
+    })
+    // get Review form db
+    app.get('/review', async (req, res) => {
+      const cursor = reviewCollection.find({})
+      const review = await cursor.toArray()
+      res.send(review)
+    })
+
+    // --------------------------
+    // Order section
+    // --------------------------
+
+    //order from customer
+    app.post('/orders', async (req, res) => {
+      const orders = req.body
+      const result = await orderCollection.insertOne(orders)
+      res.json(result)
+    })
+
+    // get all orders for admin panel
+    app.get('/orders', async (req, res) => {
+      let query = {}
+      const email = req.query.email
+      if (email) {
+        query = { email: email }
+      }
+      const cursor = orderCollection.find(query)
+      const orders = await cursor.toArray()
+      res.send(orders)
+    })
+
+    // change order status
+    app.put('/orders/:id', async (req, res) => {
+      const id = req.params.id
+      const updatedStatus = req.body
+      const filter = { _id: ObjectId(id) }
+      const options = { upsert: true }
+      const updateDoc = {
+        $set: {
+          status: updatedStatus.status
+        }
+      }
+      const result = await orderCollection.updateOne(filter, updateDoc, options)
+
+      res.json(result)
+    })
+
+    // --------------------------
+    // User/Admin section
+    // --------------------------
+
+    //Create User
+    app.post('/users', async (req, res) => {
+      const user = req.body
+      const result = await usersCollection.insertOne(user)
+      res.json(result)
+    })
+    // update User
+    app.put('/users', async (req, res) => {
+      const user = req.body
+      const filter = { email: user.email }
+      const options = { upsert: true }
+      const updateDoc = { $set: user }
+      const result = await usersCollection.updateOne(filter, updateDoc, options)
+      res.json(result)
+    })
+    // admin role set
+    app.put('/users/admin', async (req, res) => {
+      const user = req.body
+      const filter = { email: user.email }
+      const updateDoc = { $set: { role: user.role } }
+      const result = await usersCollection.updateOne(filter, updateDoc)
+      console.log(result)
+
+      res.json(result)
+    })
+
+    // admin get
+    app.get('/users/:email', async (req, res) => {
+      const email = req.params.email
+      const query = { email: email }
+      const user = await usersCollection.findOne(query)
+      let isAdmin = false
+      if (user?.role === 'admin') {
+        isAdmin = true
+      }
+      res.send({ admin: isAdmin })
+    })
   } finally {
     // client.close()
   }
