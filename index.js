@@ -46,8 +46,7 @@ async function run () {
       res.send(drones)
     })
 
-
-    // delete product 
+    // delete product
 
     app.delete('/products/:id', async (req, res) => {
       const id = req.params.id
@@ -112,7 +111,7 @@ async function run () {
       res.json(result)
     })
 
-    // delete order 
+    // delete order
 
     app.delete('/orders/:id', async (req, res) => {
       const id = req.params.id
@@ -146,7 +145,6 @@ async function run () {
       const filter = { email: user.email }
       const updateDoc = { $set: { role: user.role } }
       const result = await usersCollection.updateOne(filter, updateDoc)
-      console.log(result)
 
       res.json(result)
     })
