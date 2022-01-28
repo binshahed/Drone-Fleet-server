@@ -149,6 +149,13 @@ async function run () {
       res.json(result)
     })
 
+    // get all user 
+    app.get('/users', async (req, res) => {
+      const cursor = usersCollection.find({})
+      const users = await cursor.toArray()
+      res.send(users)
+    })
+
     // admin get
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email
